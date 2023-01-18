@@ -160,7 +160,7 @@ function Get-ConfigFilesExistStatus{
     } elseif ($result.ini_file_count -ne 2){
         [PSCustomObject]@{
             "Test Name" = "Config Files Exist";
-            "Result" = "Error";
+            "Result" = "Warn";
             "Detail" = "picom.ini file missing."
         }
     }
@@ -232,14 +232,14 @@ function Get-SCP3104ConfigStatus{
         {$null -eq $_.mrn_region_code} {
             [PSCustomObject]@{
                 "Test Name" = "SCP 3104 MRN Region code";
-                "Result" = "Error";
+                "Result" = "Warn";
                 "Detail" = "MRN Region code not found";
             }
         } 
         {$_.mrn_region_code -ne $hub_code}{
             [PSCustomObject]@{
                 "Test Name" = "SCP 3104 MRN Region code";
-                "Result" = "Error";
+                "Result" = "Warn";
                 "Detail" = "Hub code does not match, config file hub code: $($_.mrn_region_code)";
             }
         }
@@ -253,14 +253,14 @@ function Get-SCP3104ConfigStatus{
         {$null -eq $_.Picom_Region_Code} {
             [PSCustomObject]@{
                 "Test Name" = "SCP 3104 PICOM region code";
-                "Result" = "Error";
+                "Result" = "Warn";
                 "Detail" = "PICOM region code not found";
             }
         } 
         {$_.Picom_Region_Code -ne $hub_code}{
             [PSCustomObject]@{
                 "Test Name" = "SCP 3104 PICOM region code";
-                "Result" = "Error";
+                "Result" = "Warn";
                 "Detail" = "Hub code does not match, config file hub code: $($_.mrn_region_code)";
             }
         }
@@ -274,7 +274,7 @@ function Get-SCP3104ConfigStatus{
         {$null -eq $_.modality} {
             [PSCustomObject]@{
                 "Test Name" = "SCP 3104 modality";
-                "Result" = "Error";
+                "Result" = "Warn";
                 "Detail" = "modality not found";
             }
         } 
