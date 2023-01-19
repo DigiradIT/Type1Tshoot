@@ -560,12 +560,9 @@ function Test-PicomIni {
 function Get-PicomIniStatus{
     [CmdletBinding()]
     param (
-        [Parameter()]
+        [Parameter(Position=0, Mandatory=$true)]
         [string]
-        $hub_code,
-        [Parameter()]
-        [string]
-        $computer_name
+        $hub_code
     )
     $result = Test-PicomIni
     $computer_code = "DIG-$($computer_name)-2078"
