@@ -560,9 +560,12 @@ function Test-PicomIni {
 function Get-PicomIniStatus{
     [CmdletBinding()]
     param (
-        [Parameter(Position=0, Mandatory=$true)]
+        [Parameter()]
         [string]
-        $hub_code
+        $hub_code,
+        [Parameter()]
+        [string]
+        $computer_name
     )
     $result = Test-PicomIni
     $computer_code = "DIG-$($computer_name)-2078"
@@ -813,7 +816,7 @@ function Get-FirewallRulesStatus{
 function Run-PICOMTroubleShooting{
     [CmdletBinding()]
     param (
-        [Parameter()]
+        [Parameter(Position=0, Mandatory=$true)]
         [string]
         $hub_code
     )
