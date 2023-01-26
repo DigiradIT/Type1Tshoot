@@ -813,6 +813,23 @@ function Get-FirewallRulesStatus{
     }
 }
 
+function Get-UptimeStaus{
+    $daysUp = (Get-Uptime).days
+    if ($daysUp -gt 5){
+            [PSCustomObject]@{
+                "Test Name" = "System Uptime";
+                "Result" = "Error";
+                "Detail" = "System has not been restarted in one week.";
+            }
+    } else {
+            [PSCustomObject]@{
+                "Test Name" = "System Uptime";
+                "Result" = "Pass";
+                "Detail" = "System has been restarted this week.";
+            }
+    }
+}
+
 function Send-DiagnosticInfo{
     param (
         [Parameter()]
@@ -837,15 +854,16 @@ function Send-DiagnosticInfo{
     }
 }
 
-function Run-PICOMTroubleShooting{
+function Run-AllTests{
     [CmdletBinding()]
     param (
         [Parameter(Position=0, Mandatory=$true)]
         [string]
         $hub_code
     )
+
     $computer_name = $env:COMPUTERNAME
-    
+
     Get-SSLVPNInterfaceStatus
     Get-ConnectedEthernetStatus
     Get-Type1NetworkAddressStatus
@@ -858,4 +876,29 @@ function Run-PICOMTroubleShooting{
     Get-PicomTSMServiceStaus
     Get-XPConnectionStatus
     Get-FGConnectionStatus
+    Get-UptimeStaus
+
+}
+
+function Run-PICOMTroubleShooting{
+    [CmdletBinding()]
+    param (
+        [Parameter(Position=0, Mandatory=$true)]
+        [string]
+        $hub_code,
+        [Parameter()]
+        [string]
+        $order_by = "test"
+    )
+   $output = Run-AllTests -hub_code $hub_code  
+
+   $ordering = "Passed", "Warning", "Error"
+
+   if($order_by -eq "test"){
+           $output
+           Send-DiagnosticInfo -results $output
+   } else{
+           $output | Sort-Object {$ordering.IndexOf($_.Result)}     
+           Send-DiagnosticInfo -results $output
+   }
 }
