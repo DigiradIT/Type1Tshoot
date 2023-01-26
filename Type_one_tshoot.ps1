@@ -813,6 +813,30 @@ function Get-FirewallRulesStatus{
     }
 }
 
+function Send-DiagnosticInfo{
+    param (
+        [Parameter()]
+        [object]
+        $results
+    )
+
+    $baseUri = "https://digiradfileuploadtesting.blob.core.windows.net/type1logs"
+    $SASToken = "sp=racwdl&st=2023-01-26T18:37:14Z&se=2023-01-28T02:37:14Z&spr=https&sv=2021-06-08&sr=c&sig=MB%2Bc8PJ8TJd7FCevm5lYoWrOw5TAF6gguQqv6MieydU%3D"
+
+    $comptuer_name = $env:COMPUTERNAME
+    $timeStamp = Get-Date -Format o | % {$_ -replace ":", ""} | %{$_ -replace "\.", ""}
+    $fileName = "$($comptuer_name)-$($timeStamp)"
+    $uploadUrl = "$($baseUri)/$($fileName)?$($SASToken)"
+    $headers = @{
+            'x-ms-blob-type' = 'BlockBlob'
+        }
+    if($null -eq $results){
+        Run-PICOMTroubleShooting | Out-String | Invoke-RestMethod -Uri $uploadUrl -Headers $headers -Method Put
+    } else {
+        $results |  Out-String | Invoke-RestMethod -Uri $uploadUrl -Headers $headers -Method Put
+    }
+}
+
 function Run-PICOMTroubleShooting{
     [CmdletBinding()]
     param (
