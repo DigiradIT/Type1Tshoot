@@ -892,7 +892,7 @@ function Run-PICOMTroubleShooting{
     )
    $output = Run-AllTests -hub_code $hub_code  
 
-   $ordering = "Passed", "Warning", "Error"
+   $ordering = "Passed", "Warn", "Error"
 
    if($order_by -eq "test"){
            $output
