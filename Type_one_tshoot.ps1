@@ -814,7 +814,8 @@ function Get-FirewallRulesStatus{
 }
 
 function Get-UptimeStaus{
-    $daysUp = (Get-Uptime).days
+    $boot = Get-CimInstance -ClassName win32_operatingsystem | Select-Object -exp LastBootUpTime
+    $daysUp = (New-TimeSpan -Start $boot -End (get-date)).Days
     if ($daysUp -gt 5){
             [PSCustomObject]@{
                 "Test Name" = "System Uptime";
@@ -852,6 +853,8 @@ function Send-DiagnosticInfo{
     } else {
         $results |  Out-String | Invoke-RestMethod -Uri $uploadUrl -Headers $headers -Method Put
     }
+
+    return $uploadUrl
 }
 
 function Run-AllTests{
@@ -895,10 +898,11 @@ function Run-PICOMTroubleShooting{
    $ordering = "Passed", "Warn", "Error"
 
    if($order_by -eq "test"){
-           $output
-           Send-DiagnosticInfo -results $output
+           $url = Send-DiagnosticInfo -results $output
+           $output, $url
    } else{
-           $output | Sort-Object {$ordering.IndexOf($_.Result)}     
-           Send-DiagnosticInfo -results $output
+           $ordered = $output | Sort-Object {$ordering.IndexOf($_.Result)}     
+           $url = Send-DiagnosticInfo -results $output
+           $ordered, $url
    }
 }
