@@ -814,8 +814,7 @@ function Get-FirewallRulesStatus{
 }
 
 function Get-UptimeStaus{
-    $boot = Get-CimInstance -ClassName win32_operatingsystem | Select-Object -exp LastBootUpTime
-    $daysUp = (New-TimeSpan -Start $boot -End (get-date)).Days
+    $daysUp = (Get-Uptime).days
     if ($daysUp -gt 5){
             [PSCustomObject]@{
                 "Test Name" = "System Uptime";
@@ -838,8 +837,8 @@ function Send-DiagnosticInfo{
         $results
     )
 
-    $baseUri = "https://digiradfileuploadtesting.blob.core.windows.net/type1logs"
-    $SASToken = "sp=racwdl&st=2023-01-26T18:37:14Z&se=2023-01-28T02:37:14Z&spr=https&sv=2021-06-08&sr=c&sig=MB%2Bc8PJ8TJd7FCevm5lYoWrOw5TAF6gguQqv6MieydU%3D"
+    $baseUri = "https://digiradtypeounediag.blob.core.windows.net/diaglogs"
+    $SASToken = "sp=racw&st=2023-01-30T18:46:54Z&se=2024-01-31T02:46:54Z&spr=https&sv=2021-06-08&sr=c&sig=1nMZ1czT7qxVKEFpTWr75TDDvecIGAp2juD%2BktaJsM0%3D"
 
     $comptuer_name = $env:COMPUTERNAME
     $timeStamp = Get-Date -Format o | % {$_ -replace ":", ""} | %{$_ -replace "\.", ""}
@@ -853,8 +852,6 @@ function Send-DiagnosticInfo{
     } else {
         $results |  Out-String | Invoke-RestMethod -Uri $uploadUrl -Headers $headers -Method Put
     }
-
-    return $uploadUrl
 }
 
 function Run-AllTests{
@@ -895,14 +892,13 @@ function Run-PICOMTroubleShooting{
     )
    $output = Run-AllTests -hub_code $hub_code  
 
-   $ordering = "Passed", "Warn", "Error"
+   $ordering = "Passed", "Warning", "Error"
 
    if($order_by -eq "test"){
-           $url = Send-DiagnosticInfo -results $output
-           $output, $url
+           $output
+           Send-DiagnosticInfo -results $output
    } else{
-           $ordered = $output | Sort-Object {$ordering.IndexOf($_.Result)}     
-           $url = Send-DiagnosticInfo -results $output
-           $ordered, $url
+           $output | Sort-Object {$ordering.IndexOf($_.Result)}     
+           Send-DiagnosticInfo -results $output
    }
 }
