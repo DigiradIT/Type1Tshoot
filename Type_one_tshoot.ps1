@@ -570,7 +570,6 @@ function Get-PicomIniStatus{
         $computer_name
     )
     $result = Test-PicomIni
-    $computer_code = "DIG-$($computer_name)-2078"
     switch($result){
         {$null -eq $_.License_Region_Code} {
             [PSCustomObject]@{
@@ -621,14 +620,14 @@ function Get-PicomIniStatus{
                 "Detail" = "PICOM ini license device name not found";
             }
         } 
-        {$_.License_Device_Name -ne $computer_code}{
+        {$_.License_Device_Name -ne $computer_name}{
             [PSCustomObject]@{
                 "Test Name" = "PICOM ini license device name";
                 "Result" = "Error";
                 "Detail" = "PICOM ini license device name is incorrect.";
             }
         }
-        {$_.License_Device_Name -eq $computer_code}{
+        {$_.License_Device_Name -eq $computer_name}{
             [PSCustomObject]@{
                 "Test Name" = "PICOM ini license device name";
                 "Result" = "Pass";
