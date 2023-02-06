@@ -547,12 +547,14 @@ function Test-PicomIni {
         %{$_.Matches[0].Groups[1].Value}
     
     $result_hash.License_Modality = $content |
-        Select-String -pattern "^LicenseSources=[0-9]+_([A-Z]{2})" |
+        Select-String -pattern "^LicenseSources=[0-9]+_([A-Z]{2}).*" |
         %{$_.Matches[0].Groups[1].Value}
     
     $result_hash.License_Device_Name = $content |
-        Select-String -pattern "^LicenseDeviceName=DIG-(.*)-2078" |
+        Select-String -pattern "^LicenseDeviceName=DIG-(.*)-2078.*" |
         %{$_.Matches[0].Groups[1].Value}
+
+    
 
     $result_hash
 }
