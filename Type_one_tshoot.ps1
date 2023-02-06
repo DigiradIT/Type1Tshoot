@@ -815,7 +815,7 @@ function Get-FirewallRulesStatus{
 }
 
 function Get-UptimeStaus{
-    $daysUp = (Get-Uptime).days
+    $daysUP = (New-TimeSpan -start (Get-CimInstance -ClassName win32_operatingsystem | Select-Object -exp LastBootUpTime) -end (Get-Date)).Days
     if ($daysUp -gt 5){
             [PSCustomObject]@{
                 "Test Name" = "System Uptime";
