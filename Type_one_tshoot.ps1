@@ -839,7 +839,7 @@ function Send-DiagnosticInfo{
     )
 
     $baseUri = "https://digiradtypeonediag.blob.core.windows.net/diaglogs"
-    $SASToken = "?sv=2021-06-08&ss=b&srt=co&sp=rwactfx&se=2024-02-07T07:23:15Z&st=2023-02-06T23:23:15Z&spr=https&sig=umTtYC8fKGSez4Oe5CfsG00%2BdRTYk1%2FBAB8lvH8TltA%3D"
+    $SASToken = "sv=2021-06-08&ss=b&srt=co&sp=rwactfx&se=2024-02-07T07:23:15Z&st=2023-02-06T23:23:15Z&spr=https&sig=umTtYC8fKGSez4Oe5CfsG00%2BdRTYk1%2FBAB8lvH8TltA%3D"
 
     $comptuer_name = $env:COMPUTERNAME
     $timeStamp = Get-Date -Format o | % {$_ -replace ":", ""} | %{$_ -replace "\.", ""}
