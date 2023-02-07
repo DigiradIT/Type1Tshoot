@@ -853,6 +853,8 @@ function Send-DiagnosticInfo{
     } else {
         $results |  Out-String | Invoke-RestMethod -Uri $uploadUrl -Headers $headers -Method Put
     }
+
+    $uploadUrl
 }
 
 function Run-AllTests{
