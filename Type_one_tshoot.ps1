@@ -157,7 +157,7 @@ function Get-ConfigFilesExistStatus{
             "Result" = "Error";
             "Detail" = "Configuration file missing."
         } 
-    } elseif ($result.ini_file_count -ne 2){
+    } elseif ($result.ini_file_count -lt 1){
         [PSCustomObject]@{
             "Test Name" = "Config Files Exist";
             "Result" = "Warn";
