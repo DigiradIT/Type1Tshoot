@@ -878,6 +878,7 @@ function Run-AllTests{
     Get-PicomIniStatus -hub_code $hub_code -computer_name $computer_name
     Get-PicomTSMServiceStaus
     Get-XPConnectionStatus
+    Get-FirewallRulesStatus
     Get-FGConnectionStatus
     Get-UptimeStaus
 
