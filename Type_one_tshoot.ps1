@@ -857,6 +857,199 @@ function Send-DiagnosticInfo{
     $uploadUrl
 }
 
+function Create-UserTestTracker{
+    $test_status = [PSCustomObject]@{
+        EthernetStatus= $false
+        Type1NetworkAddress = $false
+        XPConnectionStatus = $false
+        FGConnectionStatus = $false
+        ContinueTesting = $true
+    }
+
+    $all_passed_method = {
+        $passed = $true
+        foreach($test in $this.psobject.properties.name){
+            if ($test -eq "UserAbort"){
+                continue
+            }
+            if (-not $this.$test){
+                $passed = $false
+            }
+        }
+        return $passed
+    }
+
+    $mem_param = @{
+        MemberType = "ScriptMethod"
+        InputObject = $test_status
+        Name = "AllPassed"
+        Value = $all_passed_method
+    }
+
+    Add-Member @mem_param
+
+    return $test_status
+}
+
+function Get-UserInput{
+    param(
+        $UserMessage = "Press c to Continue to next test; Press r to Retry this test; Press q to Quit all Testing"
+    )
+    while($true){
+        $user_input = Read-Host($UserMessage)
+        switch($user_input){
+            "c" {
+                return "continue"
+            }
+            "r"{
+                return "retry"
+            }
+            "q" {
+                return "quit"
+            }
+            Default {
+                "Invalid input"
+            }
+        }
+    }
+}
+
+function Run-UserTest{
+    param(
+        $TestTracker,
+        $TrackerKey,
+        $TestCmdLet,
+        $SuccessMessage,
+        $FailureMessage
+    )
+    Write-Host "Running user test $TrackerKey"
+    if (-not $TestTracker.ContinueTesting){
+        return
+    } 
+    $status = Invoke-Command $TestCmdLet 
+    if($status.Status -eq "Passed"){
+        Write-Host($SuccessMessage)
+        $TestTracker.$TrackerKey = $true
+        return
+    }else{
+        Write-Host($FailureMessage)
+        $user_choice = Get-UserInput
+        switch($user_choice){
+            "continue"{
+                $es = Get-ConnectedEthernetStatus
+                if($es.Status -eq "Passed"){
+                    $TestTracker.$TrackerKey = $true
+                }
+                return
+            }
+            "retry"{
+                break
+            }
+            "quit"{
+                $TestTracker.ContinueTesting = $false
+                return
+            }
+        }
+    }
+}
+function User-TestEthernet{
+    param(
+        $TestingTracker
+    )
+    if (-not $TestingTracker.ContinueTesting){
+        return
+    } 
+    $es = Get-ConnectedEthernetStatus
+    while($true){
+        if($es.Status -eq "Passed"){
+        Write-Host("Ethernet Connection Test Passed!") 
+        $TestingTracker.EthernetStatus = $true
+        return
+        }else{
+            Write-Host("Ethernet cable is not connected. Please connect an ethernet cable to the laptop and port 1 on the FortiGate.")
+            $user_choice = Get-UserInput
+            switch($user_choice){
+                "continue"{
+                    $es = Get-ConnectedEthernetStatus
+                    if($es.Status -eq "Passed"){
+                        $TestingTracker.EthernetStatus = $true
+                    }
+                    return
+                }
+                "retry"{
+                    break
+                }
+                "quit"{
+                    Write-Host "setting to false"
+                    $TestingTracker.ContinueTesting = $false
+                    Write-Host $TestingTracker.ContinueTesting
+                    return
+                }
+            }
+        }
+    }
+}
+
+function Summarize-Results{
+    param(
+        $TestTracker
+    )
+
+    if($TestTracker.AllPassed()){
+        Write-Host "Testing is complete and all tests are passing!  If you are still having problems please create a helpdesk ticket"
+    }else{
+        $user_choice = Get-UserInput -UserMessage "Testing has completed with errors, press r or c to re-run tests or q to quit.  If you need help please create a helpdesk ticket"
+        switch($user_choice){
+            "continue"{
+                $TestTracker.ContinueTesting = $false
+                return
+            }
+            "quit"{
+                $TestTracker.ContinueTesting = $false
+                return
+            }
+            "retry"{
+               return 
+            }
+            Default{
+                $TestTracker.ContinueTesting = $false
+                return
+            }
+        }
+    }
+}
+
+function Run-UserTests{
+    $tracker = Create-UserTestTracker
+    while((-not $tracker.AllPassed()) -and $tracker.ContinueTesting){
+        Run-UserTest -TestTracker $tracker -TrackerKey "EthernetStatus" `
+            -TestCmdLet {Get-ConnectedEthernetStatus} `
+            -SuccessMessage "Ethernet connection test passed!" `
+            -FailureMessage "Network cable is not connected. Please connect an ethernet cable to the laptop and port 1 on the FortiGate and the Fortigate is online."
+
+        Run-UserTest -TestTracker $tracker `
+            -TrackerKey "Type1NetworkAddress" `
+            -TestCmdLet {Get-Type1NetworkAddressStatus} `
+            -SuccessMessage "Ethernet interface is assigned a valid IP!" `
+            -FailureMessage "Wired network has an incorrect IP address!  Please make sure that the laptop is connected to Port 1 on the FortiGate and the FortiGater is online."
+        
+        Run-UserTest -TestTracker $tracker `
+            -TrackerKey "XPConnectionStatus" `
+            -TestCmdLet {Get-XPConnectionStatus} `
+            -SuccessMessage "Camera computer is reachable!" `
+            -FailureMessage "Camera Computer is not reachable!  Please make sure that the camera computer is online and connected to port 2 of the FortiGate"
+        
+        
+        Run-UserTest -TestTracker $tracker `
+            -TrackerKey "FGConnectionStatus" `
+            -TestCmdLet {Get-FGConnectionStatus} `
+            -SuccessMessage "FortiGate is reachable!" `
+            -FailureMessage "FortiGate is not reachable!  Please make sure the FortiGate is plugged in and online, and that your laptop is connected to it on port 1"
+        
+        Summarize-Results -TestTracker $tracker
+    }
+    $tracker
+}
 function Run-AllTests{
     [CmdletBinding()]
     param (
