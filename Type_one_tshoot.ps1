@@ -927,7 +927,7 @@ function Run-UserTest{
         return
     } 
     $status = Invoke-Command $TestCmdLet 
-    if($status.Result -eq "Passed"){
+    if($status.Result -eq "Pass"){
         Write-Host($SuccessMessage)
         $TestTracker.$TrackerKey = $true
         return
@@ -937,7 +937,7 @@ function Run-UserTest{
         switch($user_choice){
             "continue"{
                 $es = Get-ConnectedEthernetStatus
-                if($es.Result -eq "Passed"){
+                if($es.Result -eq "Pass"){
                     $TestTracker.$TrackerKey = $true
                 }
                 return
