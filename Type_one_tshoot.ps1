@@ -952,44 +952,6 @@ function Run-UserTest{
         }
     }
 }
-function User-TestEthernet{
-    param(
-        $TestingTracker
-    )
-    if (-not $TestingTracker.ContinueTesting){
-        return
-    } 
-    $es = Get-ConnectedEthernetStatus
-    while($true){
-        if($es.Status -eq "Passed"){
-        Write-Host("Ethernet Connection Test Passed!") 
-        $TestingTracker.EthernetStatus = $true
-        return
-        }else{
-            Write-Host("Ethernet cable is not connected. Please connect an ethernet cable to the laptop and port 1 on the FortiGate.")
-            $user_choice = Get-UserInput
-            switch($user_choice){
-                "continue"{
-                    $es = Get-ConnectedEthernetStatus
-                    if($es.Status -eq "Passed"){
-                        $TestingTracker.EthernetStatus = $true
-                    }
-                    return
-                }
-                "retry"{
-                    break
-                }
-                "quit"{
-                    Write-Host "setting to false"
-                    $TestingTracker.ContinueTesting = $false
-                    Write-Host $TestingTracker.ContinueTesting
-                    return
-                }
-            }
-        }
-    }
-}
-
 function Summarize-Results{
     param(
         $TestTracker
