@@ -936,7 +936,7 @@ function Run-UserTest{
         $user_choice = Get-UserInput
         switch($user_choice){
             "continue"{
-                $es = Get-ConnectedEthernetStatus
+                $es = Invoke-Command $TestCmdLet
                 if($es.Result -eq "Pass"){
                     $TestTracker.$TrackerKey = $true
                 }
