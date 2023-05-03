@@ -922,6 +922,8 @@ function Create-UserTestTracker{
         EthernetStatus= $false
         Type1NetworkAddress = $false
         # XPConnectionStatus = $false
+        XPPingStatus = $false
+        XPRDPStatus = $false
         FGConnectionStatus = $false
         ContinueTesting = $true
     }
