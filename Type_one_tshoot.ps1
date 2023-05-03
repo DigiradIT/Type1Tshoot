@@ -990,11 +990,11 @@ function Run-UserTest{
     } 
     $status = Invoke-Command $TestCmdLet 
     if($status.Result -eq "Pass"){
-        Write-Host($SuccessMessage) -ForegroundColor Yellow -BackgroundColor Green
+        Write-Host($SuccessMessage) -ForegroundColor Yellow -BackgroundColor DarkGreen
         $TestTracker.$TrackerKey = $true
         return
     }else{
-        Write-Host($FailureMessage)
+        Write-Host($FailureMessage) -ForegroundColor Yellow -BackgroundColor DarkRed
         $user_choice = Get-UserInput
         switch($user_choice){
             "continue"{
