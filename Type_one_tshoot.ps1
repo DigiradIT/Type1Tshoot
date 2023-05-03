@@ -1036,25 +1036,25 @@ function Run-UserTests{
             -TrackerKey "Type1NetworkAddress" `
             -TestCmdLet {Get-Type1NetworkAddressStatus} `
             -SuccessMessage "Ethernet interface is assigned a valid IP!" `
-            -FailureMessage "Wired network has an incorrect IP address!  Please make sure that the laptop is connected to Port 1 on the FortiGate and the FortiGater is online."
+            -FailureMessage "Wired network has an incorrect IP address!  Please make sure that the laptop is connected to Port 2 on the FortiGate and the FortiGater is online."
         
         Run-UserTest -TestTracker $tracker `
             -TrackerKey "XPPingStatus" `
             -TestCmdLet {Get-XPConnectionPingStatus} `
             -SuccessMessage "Camera computer is reachable!" `
-            -FailureMessage "Camera Computer is not reachable!  Please make sure that the camera computer is online and connected to port 2 of the FortiGate"
+            -FailureMessage "Camera Computer is not reachable!  Please make sure that the camera computer is online and connected to port 1 of the FortiGate"
 
         Run-UserTest -TestTracker $tracker `
             -TrackerKey "XPRDPStatus" `
             -TestCmdLet {Get-XPConnectionRDPStatus} `
             -SuccessMessage "Can remote into camera computer!" `
-            -FailureMessage "Cannot remote into camera computer!  Please make sure that the camera computer is online and connected to port 2 of the FortiGate"
+            -FailureMessage "Cannot remote into camera computer!  Please make sure that the camera computer is online and connected to port 1 of the FortiGate"
         
         Run-UserTest -TestTracker $tracker `
             -TrackerKey "FGConnectionStatus" `
             -TestCmdLet {Get-FGConnectionStatus} `
             -SuccessMessage "FortiGate is reachable!" `
-            -FailureMessage "FortiGate is not reachable!  Please make sure the FortiGate is plugged in and online, and that your laptop is connected to it on port 1"
+            -FailureMessage "FortiGate is not reachable!  Please make sure the FortiGate is plugged in and online, and that your laptop is connected to it on port 2"
         
         Summarize-Results -TestTracker $tracker
     }
