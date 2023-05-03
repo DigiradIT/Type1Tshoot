@@ -688,8 +688,8 @@ function Test-XPConnection {
         $XP_IP_Octets = $wired_network_interface.type1_network_address.split(".")
         $XP_IP = "$($XP_IP_Octets[0]).$($XP_IP_Octets[1]).$($XP_IP_Octets[2]).130"
 
-        $result_hash.rdp_test = (Test-NetConnection $XP_IP -RemotePort 3389).TcpTestSucceeded
-        $result_hash.ping_test = (Test-NetConnection $XP_IP).PingSucceeded
+        $result_hash.rdp_test = (Test-NetConnection $XP_IP -RemotePort 3389 -InformationLevel Quiet).TcpTestSucceeded
+        $result_hash.ping_test = (Test-NetConnection $XP_IP -InformationLevel Quiet).PingSucceeded
     }
     $result_hash
 }
@@ -994,7 +994,7 @@ function Run-UserTest{
         $TestTracker.$TrackerKey = $true
         return
     }else{
-        Write-Host($FailureMessage) -ForegroundColor Yellow -BackgroundColor DarkRed
+        Write-Host($FailureMessage) -ForegroundColor Yellow -BackgroundColor DarkRed 
         $user_choice = Get-UserInput
         switch($user_choice){
             "continue"{
