@@ -921,7 +921,7 @@ function Create-UserTestTracker{
     $test_status = [PSCustomObject]@{
         EthernetStatus= $false
         Type1NetworkAddress = $false
-        XPConnectionStatus = $false
+        # XPConnectionStatus = $false
         FGConnectionStatus = $false
         ContinueTesting = $true
     }
@@ -988,7 +988,7 @@ function Run-UserTest{
     } 
     $status = Invoke-Command $TestCmdLet 
     if($status.Result -eq "Pass"){
-        Write-Host($SuccessMessage)
+        Write-Host($SuccessMessage) -ForegroundColor Yellow -BackgroundColor Green
         $TestTracker.$TrackerKey = $true
         return
     }else{
