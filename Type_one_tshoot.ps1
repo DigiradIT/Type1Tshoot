@@ -65,6 +65,7 @@ function Get-ConnectedEthernetStatus{
     }
 }
 
+
 function Test-Type1NetworkAddress{
         $result_hash = @{result_type="Type1_Network_address"}
         $network_address = Get-ConnectedInterfaces | 
@@ -692,6 +693,65 @@ function Test-XPConnection {
     }
     $result_hash
 }
+function Get-XPConnectionPingStatus {
+    $result = Test-XPConnection
+    switch($result){
+        {"not_performed" -eq $_.ping_test }{
+            [PSCustomObject]@{
+                "Test Name" = "XP Ping RDP";
+                "Result" = "Error";
+                "Detail" = "XP Ping RDP not performed - no suitabl IP found. Check IP configuration tests.";
+            }
+            Break
+        }
+        {$_.ping_test -eq $false}{
+            [PSCustomObject]@{
+                "Test Name" = "XP Ping RDP";
+                "Result" = "Error";
+                "Detail" = "XP Ping RDP failed to ping.";
+            }
+            Break
+        }
+        {$_.ping_test -eq $true}{
+            [PSCustomObject]@{
+                "Test Name" = "XP Ping RDP";
+                "Result" = "Pass";
+                "Detail" = "XP Ping passed.";
+            }
+            Break
+        }
+    }
+}
+
+function Get-XPConnectionRDPStatus {
+    $result = Test-XPConnection
+    switch($result){
+        {  "not_performed" -eq $_.rdp_test}{
+            [PSCustomObject]@{
+                "Test Name" = "XP Connection RDP";
+                "Result" = "Error";
+                "Detail" = "XP Connection RDP test not performed - no suitable IP found.  Check IP configuration tests.";
+            }
+            Break
+        }
+        {$_.rdp_test -eq $false}{
+            [PSCustomObject]@{
+                "Test Name" = "XP Connection RDP";
+                "Result" = "Error";
+                "Detail" = "XP Connection RDP test failed to connect.";
+            }
+            Break
+        }
+        {$_.rdp_test -eq $true}{
+            [PSCustomObject]@{
+                "Test Name" = "XP Connection RDP";
+                "Result" = "Pass";
+                "Detail" = "XP Connection RDP passed.";
+            }
+            Break
+        }
+    }
+}
 
 function Get-XPConnectionStatus {
     $result = Test-XPConnection
@@ -995,12 +1055,23 @@ function Run-UserTests{
             -SuccessMessage "Ethernet interface is assigned a valid IP!" `
             -FailureMessage "Wired network has an incorrect IP address!  Please make sure that the laptop is connected to Port 1 on the FortiGate and the FortiGater is online."
         
+        # Run-UserTest -TestTracker $tracker `
+        #     -TrackerKey "XPConnectionStatus" `
+        #     -TestCmdLet {Get-XPConnectionStatus} `
+        #     -SuccessMessage "Camera computer is reachable!" `
+        #     -FailureMessage "Camera Computer is not reachable!  Please make sure that the camera computer is online and connected to port 2 of the FortiGate"
+        
         Run-UserTest -TestTracker $tracker `
-            -TrackerKey "XPConnectionStatus" `
-            -TestCmdLet {Get-XPConnectionStatus} `
+            -TrackerKey "XPPingStatus" `
+            -TestCmdLet {Get-XPConnectionPingStatus} `
             -SuccessMessage "Camera computer is reachable!" `
             -FailureMessage "Camera Computer is not reachable!  Please make sure that the camera computer is online and connected to port 2 of the FortiGate"
-        
+
+        Run-UserTest -TestTracker $tracker `
+            -TrackerKey "XPRDPStatus" `
+            -TestCmdLet {Get-XPConnectionRDPStatus} `
+            -SuccessMessage "Can remote into camera computer!" `
+            -FailureMessage "Cannot remote into camera computer!  Please make sure that the camera computer is online and connected to port 2 of the FortiGate"
         
         Run-UserTest -TestTracker $tracker `
             -TrackerKey "FGConnectionStatus" `
@@ -1012,6 +1083,8 @@ function Run-UserTests{
     }
     $tracker
 }
+
+#TODO: if changes to user testing work then we need to update this function to use the new XP connection checking functions.
 function Run-AllTests{
     [CmdletBinding()]
     param (
