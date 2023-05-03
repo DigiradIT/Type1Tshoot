@@ -270,7 +270,7 @@ function Get-SCP3104ConfigStatus{
                 "Test Name" = "SCP 3104 PICOM region code";
                 "Result" = "Pass";
                 "Detail" = "SCP 3104 PICOM region code set correctly.";
-            }
+        }
         }
         {$null -eq $_.modality} {
             [PSCustomObject]@{
@@ -688,8 +688,8 @@ function Test-XPConnection {
         $XP_IP_Octets = $wired_network_interface.type1_network_address.split(".")
         $XP_IP = "$($XP_IP_Octets[0]).$($XP_IP_Octets[1]).$($XP_IP_Octets[2]).130"
 
-        $result_hash.rdp_test = (Test-NetConnection $XP_IP -RemotePort 3389 -InformationLevel Quiet ).TcpTestSucceeded
-        $result_hash.ping_test = (Test-NetConnection $XP_IP -InformationLevel Quiet).PingSucceeded
+        $result_hash.rdp_test = (Test-NetConnection $XP_IP -RemotePort 3389).TcpTestSucceeded
+        $result_hash.ping_test = (Test-NetConnection $XP_IP).PingSucceeded
     }
     $result_hash
 }
