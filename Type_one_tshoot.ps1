@@ -678,6 +678,29 @@ function Get-PicomTSMServiceStaus{
         }
     }
 }
+function Test-InternetConnection{
+    $result_hash = @{result_type = "Internet_Connection"}
+    $result_hash.google_ping_test = (Test-NetConnection 8.8.8.8).PingSucceeded
+    $result_hash
+}
+
+function Get-InternetConnectionStatus{
+    $result = Test-InternetConnection
+
+    if ($result.google_ping_test) {
+            [PSCustomObject]@{
+                "Test Name" = "Internet connection test";
+                "Result" = "Pass";
+                "Detail" = "Can ping 8.8.8.8";
+            }
+    } else{
+            [PSCustomObject]@{
+                "Test Name" = "Internet connection test";
+                "Result" = "Error";
+                "Detail" = "Cannot ping 8.8.8.8";
+            }
+    }
+}
 function Test-XPConnection {
     $result_hash = @{result_type = "XP_Connection"}
     $wired_network_interface = Get-ConnectedInterfaces | Test-Type1NetworkAddress
@@ -693,12 +716,13 @@ function Test-XPConnection {
     }
     $result_hash
 }
+
 function Get-XPConnectionPingStatus {
     $result = Test-XPConnection
     switch($result){
         {"not_performed" -eq $_.ping_test }{
             [PSCustomObject]@{
-                "Test Name" = "XP Ping RDP";
+                "Test Name" = "XP Ping";
                 "Result" = "Error";
                 "Detail" = "XP Ping RDP not performed - no suitabl IP found. Check IP configuration tests.";
             }
@@ -706,15 +730,15 @@ function Get-XPConnectionPingStatus {
         }
         {$_.ping_test -eq $false}{
             [PSCustomObject]@{
-                "Test Name" = "XP Ping RDP";
+                "Test Name" = "XP Ping";
                 "Result" = "Error";
-                "Detail" = "XP Ping RDP failed to ping.";
+                "Detail" = "XP Ping failed to ping.";
             }
             Break
         }
         {$_.ping_test -eq $true}{
             [PSCustomObject]@{
-                "Test Name" = "XP Ping RDP";
+                "Test Name" = "XP Ping";
                 "Result" = "Pass";
                 "Detail" = "XP Ping passed.";
             }
@@ -872,6 +896,7 @@ function Send-DiagnosticInfo{
 function Create-UserTestTracker{
     $test_status = [PSCustomObject]@{
         EthernetStatus= $false
+        InternetStatus = $false
         Type1NetworkAddress = $false
         XPPingStatus = $false
         XPRDPStatus = $false
@@ -1001,6 +1026,11 @@ function Run-UserTests{
             -TestCmdLet {Get-ConnectedEthernetStatus} `
             -SuccessMessage "Ethernet connection test passed!" `
             -FailureMessage "Network cable is not connected. Please connect an ethernet cable to the laptop and port 1 on the FortiGate and the Fortigate is online."
+
+        Run-UserTest -TestTracker $tracker -TrackerKey "InternetStatus" `
+            -TestCmdLet {Get-InternetConnectionStatus} `
+            -SuccessMessage "You can reach the internet!" `
+            -FailureMessage "Unable to reach the internet!  You may not be able to upload studies to ScImage and IT will not be able to help you remotely.  Contact IT at your site for help connecting to the internet."
 
         Run-UserTest -TestTracker $tracker `
             -TrackerKey "Type1NetworkAddress" `
