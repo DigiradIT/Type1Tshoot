@@ -688,7 +688,7 @@ function Test-XPConnection {
         $XP_IP_Octets = $wired_network_interface.type1_network_address.split(".")
         $XP_IP = "$($XP_IP_Octets[0]).$($XP_IP_Octets[1]).$($XP_IP_Octets[2]).130"
 
-        $result_hash.rdp_test = (Test-NetConnection $XP_IP -RemotePort 3389 -InformationLevel Quiet).TcpTestSucceeded
+        $result_hash.rdp_test = (Test-NetConnection $XP_IP -RemotePort 3389 -InformationLevel Quiet ).TcpTestSucceeded
         $result_hash.ping_test = (Test-NetConnection $XP_IP -InformationLevel Quiet).PingSucceeded
     }
     $result_hash
@@ -749,54 +749,6 @@ function Get-XPConnectionRDPStatus {
                 "Detail" = "XP Connection RDP passed.";
             }
             Break
-        }
-    }
-}
-
-function Get-XPConnectionStatus {
-    $result = Test-XPConnection
-    switch($result){
-        {  "not_performed" -eq $_.rdp_test}{
-            [PSCustomObject]@{
-                "Test Name" = "XP Connection RDP";
-                "Result" = "Error";
-                "Detail" = "XP Connection RDP test not performed - no suitable IP found.  Check IP configuration tests.";
-            }
-        }
-        {$_.rdp_test -eq $false}{
-            [PSCustomObject]@{
-                "Test Name" = "XP Connection RDP";
-                "Result" = "Error";
-                "Detail" = "XP Connection RDP test failed to connect.";
-            }
-        }
-        {$_.rdp_test -eq $true}{
-            [PSCustomObject]@{
-                "Test Name" = "XP Connection RDP";
-                "Result" = "Pass";
-                "Detail" = "XP Connection RDP passed.";
-            }
-        }
-        {"not_performed" -eq $_.ping_test }{
-            [PSCustomObject]@{
-                "Test Name" = "XP Ping RDP";
-                "Result" = "Error";
-                "Detail" = "XP Ping RDP not performed - no suitabl IP found. Check IP configuration tests.";
-            }
-        }
-        {$_.ping_test -eq $false}{
-            [PSCustomObject]@{
-                "Test Name" = "XP Ping RDP";
-                "Result" = "Error";
-                "Detail" = "XP Ping RDP failed to ping.";
-            }
-        }
-        {$_.ping_test -eq $true}{
-            [PSCustomObject]@{
-                "Test Name" = "XP Ping RDP";
-                "Result" = "Pass";
-                "Detail" = "XP Ping passed.";
-            }
         }
     }
 }
@@ -921,7 +873,6 @@ function Create-UserTestTracker{
     $test_status = [PSCustomObject]@{
         EthernetStatus= $false
         Type1NetworkAddress = $false
-        # XPConnectionStatus = $false
         XPPingStatus = $false
         XPRDPStatus = $false
         FGConnectionStatus = $false
@@ -1057,12 +1008,6 @@ function Run-UserTests{
             -SuccessMessage "Ethernet interface is assigned a valid IP!" `
             -FailureMessage "Wired network has an incorrect IP address!  Please make sure that the laptop is connected to Port 1 on the FortiGate and the FortiGater is online."
         
-        # Run-UserTest -TestTracker $tracker `
-        #     -TrackerKey "XPConnectionStatus" `
-        #     -TestCmdLet {Get-XPConnectionStatus} `
-        #     -SuccessMessage "Camera computer is reachable!" `
-        #     -FailureMessage "Camera Computer is not reachable!  Please make sure that the camera computer is online and connected to port 2 of the FortiGate"
-        
         Run-UserTest -TestTracker $tracker `
             -TrackerKey "XPPingStatus" `
             -TestCmdLet {Get-XPConnectionPingStatus} `
@@ -1086,7 +1031,6 @@ function Run-UserTests{
     $tracker
 }
 
-#TODO: if changes to user testing work then we need to update this function to use the new XP connection checking functions.
 function Run-AllTests{
     [CmdletBinding()]
     param (
@@ -1107,7 +1051,8 @@ function Run-AllTests{
     Get-NdStoreSCPXAStatus -hub_code $hub_code
     Get-PicomIniStatus -hub_code $hub_code -computer_name $computer_name
     Get-PicomTSMServiceStaus
-    Get-XPConnectionStatus
+    Get-XPConnectionRDPStatus
+    Get-XPConnectionPingStatus
     Get-FirewallRulesStatus
     Get-FGConnectionStatus
     Get-UptimeStaus
