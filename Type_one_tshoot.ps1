@@ -1,8 +1,24 @@
+<#
+.SYNOPSIS
+   Returns a list of connected interfaces
+.NOTES
+    If SSL VPN is connected it will be included in the list of connected interfaces.
+.OUTPUTS
+    Collection of network interface objects.
+#>
 function Get-ConnectedInterfaces {
 
  Get-NetIPConfiguration | Where-Object {$_.NetAdapter.status -ne "Disconnected"}
 }
 
+<#
+.SYNOPSIS
+    Determines whether the SSL VPN is connected based on the descriptions of connected interfaces.
+.NOTES
+    If fortinet changes the description of the interface this will break!
+.OUTPUTS
+    A hash objcet with a connected key.
+#>
 function Test-SSLVPNInterface{
 
     $result_hash = @{result_type = "SSL_VPN"}
@@ -16,6 +32,13 @@ function Test-SSLVPNInterface{
     
 }
 
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-SSLVPNInterface and returns the test result.
+.OUTPUTS
+    A PSCustom Object taht contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-SSLVPNInterfaceStatus{
     $result = Test-SSLVPNInterface
     if ($result.connected){
@@ -33,6 +56,15 @@ function Get-SSLVPNInterfaceStatus{
     }
 }
 
+<#
+.SYNOPSIS
+    Determines whether there is a connected physical ethernet connection.
+.NOTES
+    The Fortinet SSL interface shows up as a an ethernet interface and can only be 
+    distinguished from physical ethernet adapters by it's description.
+.OUTPUTS
+    A result hash with a connected key.
+#>
 function Test-ConnectedEthernet{
         $result_hash = @{result_type = "connected_ethernet"}
         $physical_ethernet = Get-ConnectedInterfaces | 
@@ -48,6 +80,13 @@ function Test-ConnectedEthernet{
        $result_hash
 }
 
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-ConnectedEthernet and returns the test result.
+.OUTPUTS
+    A PSCustom Object taht contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-ConnectedEthernetStatus{
     $result = Test-ConnectedEthernet
     if ($result.connected){
@@ -65,7 +104,17 @@ function Get-ConnectedEthernetStatus{
     }
 }
 
-
+<#
+.SYNOPSIS
+    Determines whether there is a connected physical ethernet port that is assigned
+    an IP in the 172.17.0.0/16 subnet.
+.NOTES
+    Since individual Fortigates assign different network addresses we cannot currently 
+    narrow down this check.  If in the future we change our addressing scheme this 
+    function will need to be updated.
+.OUTPUTS
+    A result hash with a type1_network_address key.
+#>
 function Test-Type1NetworkAddress{
         $result_hash = @{result_type="Type1_Network_address"}
         $network_address = Get-ConnectedInterfaces | 
@@ -82,6 +131,13 @@ function Test-Type1NetworkAddress{
         $result_hash
 }
 
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-Type1NetworkAddress and returns the test result.
+.OUTPUTS
+    A PSCustom Object taht contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-Type1NetworkAddressStatus{
     $result = Test-Type1NetworkAddress
     if ($result.type1_network_address -ne "not_found"){
@@ -98,6 +154,14 @@ function Get-Type1NetworkAddressStatus{
         }
     }
 }
+<#
+.SYNOPSIS
+    Determines whether there isa service listening on either TCP 3104 or 3105.
+.NOTES
+    3104 and 3105 are the default listening ports for the PICOM service.
+.OUTPUTS
+    A result hash with a key set to the listening port.
+#>
 function Test-PicomListening{
     $result_hash = @{result_type="Picom_Listening"}
     $listening = Get-NetTCPConnection -State Listen |
@@ -110,6 +174,13 @@ function Test-PicomListening{
     $result_hash
 }
 
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-PicomListening and returns the test result.
+.OUTPUTS
+    A PSCustom Object taht contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-PicomListeningStatus{
     $result = Test-PicomListening
     if (($result["3104"] -eq "listening") -and ($result["3105"] -eq "listening")){
@@ -126,6 +197,17 @@ function Get-PicomListeningStatus{
         }
     }
 }
+
+<#
+.SYNOPSIS
+    Determines whether the configuration files needed for PICOM exist.
+.NOTES
+    If configuration files are added or removed as requirements we will need
+    to update this function.
+.OUTPUTS
+    A result hash with a cfg file count and ini file count key.
+#>
+
 function Test-ConfigFilesExist{
 
     $result_hash = @{result_type="Config_Files_Exist"}
@@ -144,6 +226,14 @@ function Test-ConfigFilesExist{
 
     $result_hash
 }
+
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-ConfigFileExist and returns the test result.
+.OUTPUTS
+    A PSCustom Object that contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-ConfigFilesExistStatus{
     $result = Test-ConfigFilesExist
     if (($result.cfg_file_count -eq 2) -and ($result.ini_file_cnt -eq 1)){
@@ -166,6 +256,15 @@ function Get-ConfigFilesExistStatus{
         }
     }
 }
+<#
+.SYNOPSIS
+    Determines whether there is a PICOM license file present.
+.NOTES
+    It is important to note that this is an existence check.  We are not
+        able to parse the license file
+.OUTPUTS
+    A result hash with a license file count key.
+#>
 function Test-LicenseFileExist{
     $result_hash = @{result_type="License_File_Exist"}
     $lic_count = Get-ChildItem -Path "C:/Program Files (x86)/ScImage/Picom" |
@@ -175,6 +274,13 @@ function Test-LicenseFileExist{
     $result_hash.license_file_count = $lic_count.count
     $result_hash
 }
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-LicenseFileExist and returns the test result.
+.OUTPUTS
+    A PSCustom Object taht contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-LicenseFileExistStatus{
     $result = Test-LicenseFileExist
     if ($result.license_file_count -ge 1){
@@ -191,6 +297,19 @@ function Get-LicenseFileExistStatus{
         }
     } 
 }
+<#
+.SYNOPSIS
+    Determines whether needed fields are present in the NdSCP3104.cfg file.
+.NOTES
+    In this check we are determining whether fields that are configured as part of the
+    install process are correct.  This test does not verify the entirety of the file.
+
+    There are redundant fields withing the config file, and we must validate them all.  There are also 
+    redundant fields across other config files that need to be configured.
+.OUTPUTS
+    A result hash with a Picom_Region_Code, modality, picom_server_dns, picom_server_port, and mrn_region_code 
+    keys.
+#>
 
 function Test-SCP3104Config {
     $content = Get-Content -Path "C:/Program Files (x86)/ScImage/Picom/NdSCP3104.cfg"
@@ -219,6 +338,13 @@ function Test-SCP3104Config {
     $result_hash
 
 }
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-SCP3104Config and returns the test result.
+.OUTPUTS
+    A PSCustom Object taht contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-SCP3104ConfigStatus{
     [CmdletBinding()]
     param (
@@ -339,6 +465,14 @@ function Get-SCP3104ConfigStatus{
     }
 }
 
+<#
+.SYNOPSIS
+    Checks whether needed fields are configured properly in the NDStoreSCPXA file. 
+.NOTES
+    Only fields that are configured at installation are checked.
+.OUTPUTS
+    A result hash.
+#>
 function Test-NdStoreSCPXA {
     $content = Get-Content -Path "C:/Program Files (x86)/ScImage/Picom/NdStoreSCPXA.cfg"
     $result_hash = @{result_type = "NdStoreSCPXA_Config"} 
@@ -378,6 +512,13 @@ function Test-NdStoreSCPXA {
     $result_hash
 }
 
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-NdStoreSCPXA and returns the test result.
+.OUTPUTS
+    A PSCustom Object taht contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-NdStoreSCPXAStatus{
     [CmdletBinding()]
     param (
@@ -539,6 +680,14 @@ function Get-NdStoreSCPXAStatus{
     }
 }
 
+<#
+.SYNOPSIS
+    Checks configuration settings in Picom.ini file. 
+.NOTES
+    Only checks field configured at installation.
+.OUTPUTS
+    A result hash.
+#>
 function Test-PicomIni {
     $content = Get-Content -Path "C:/Program Files (x86)/ScImage/Picom/Picom.ini"
     $result_hash = @{result_type = "Picom_Ini"} 
@@ -560,6 +709,13 @@ function Test-PicomIni {
     $result_hash
 }
 
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-PicomIni and returns the test result.
+.OUTPUTS
+    A PSCustom Object taht contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-PicomIniStatus{
     [CmdletBinding()]
     param (
@@ -638,6 +794,12 @@ function Get-PicomIniStatus{
     }
 }
 
+<#
+.SYNOPSIS
+    Checks the status of the PICOM TSM service.
+.OUTPUTS
+    A result hash.
+#>
 function Test-PicomTSMService {
     $result_hash = @{result_type = "PICOM_TSM"}
     $service_status = Get-Service | where name -eq "PICOM TSM"
@@ -652,6 +814,13 @@ function Test-PicomTSMService {
     $result_hash
 }
 
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-PicomTSMService and returns the test result.
+.OUTPUTS
+    A PSCustom Object that contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-PicomTSMServiceStaus{
     $result = Test-PicomTSMService
     switch ($result) {
@@ -678,12 +847,28 @@ function Get-PicomTSMServiceStaus{
         }
     }
 }
+
+<#
+.SYNOPSIS
+    Checks if there is a connection to the internet.
+.NOTES
+    Performs ping test against google DNS.
+.OUTPUTS
+    A result hash.
+#>
 function Test-InternetConnection{
     $result_hash = @{result_type = "Internet_Connection"}
     $result_hash.google_ping_test = (Test-NetConnection 8.8.8.8).PingSucceeded
     $result_hash
 }
 
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-InternetConnection and returns the test result.
+.OUTPUTS
+    A PSCustom Object taht contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-InternetConnectionStatus{
     $result = Test-InternetConnection
 
@@ -701,6 +886,15 @@ function Get-InternetConnectionStatus{
             }
     }
 }
+
+<#
+.SYNOPSIS
+    Checks connection to camera system using ICMP and a connection to TCP 3389.
+.NOTES
+    This test runs both the ping test and the TCP connection test for RDP.
+.OUTPUTS
+    A result hash.
+#>
 function Test-XPConnection {
     $result_hash = @{result_type = "XP_Connection"}
     $wired_network_interface = Get-ConnectedInterfaces | Test-Type1NetworkAddress
@@ -717,6 +911,13 @@ function Test-XPConnection {
     $result_hash
 }
 
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-XPConnection and returns the test result for ICMP.
+.OUTPUTS
+    A PSCustom Object taht contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-XPConnectionPingStatus {
     $result = Test-XPConnection
     switch($result){
@@ -747,6 +948,13 @@ function Get-XPConnectionPingStatus {
     }
 }
 
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-XPConnection and returns the test result for RDP.
+.OUTPUTS
+    A PSCustom Object taht contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-XPConnectionRDPStatus {
     $result = Test-XPConnection
     switch($result){
@@ -777,6 +985,14 @@ function Get-XPConnectionRDPStatus {
     }
 }
 
+<#
+.SYNOPSIS
+    Checks connectvity to the Fortigate interface. 
+.NOTES
+    If we change how addressing is handled by the Fortigate we will need to update this check.
+.OUTPUTS
+    A result hash.
+#>
 function Test-FGConnection {
     $result_hash = @{result_type = "FG_Connection"}
     $wired_network_interface = Get-ConnectedInterfaces | Test-Type1NetworkAddress
@@ -791,6 +1007,13 @@ function Test-FGConnection {
     $result_hash
 }
 
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-FGConnection and returns the test result for ICMP.
+.OUTPUTS
+    A PSCustom Object taht contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-FGConnectionStatus{
     $result = Test-FGConnection
     switch($result){
@@ -817,6 +1040,14 @@ function Get-FGConnectionStatus{
         }
     }
 }
+<#
+.SYNOPSIS
+    Checks configuration of firewall rules. 
+.NOTES
+    This must be run in an administrative shell.
+.OUTPUTS
+    A result hash.
+#>
 function Test-FirewallRules{
     $result_hash = @{result_type = "Firewall_Rules"}
     $PICOMFirewallRules = Get-NetFirewallRule -PolicyStore ActiveStore |
@@ -830,6 +1061,13 @@ function Test-FirewallRules{
     $result_hash
 }
 
+<#
+.SYNOPSIS
+    Runs tests on the output of Test-FirewalRules and returns the test result for ICMP.
+.OUTPUTS
+    A PSCustom Object taht contains "Test Name", "Result", and "Detail" keys.
+    Result will be either Pass or Error.
+#>
 function Get-FirewallRulesStatus{
     $result = Test-FirewallRules
     switch($result){
@@ -850,6 +1088,16 @@ function Get-FirewallRulesStatus{
     }
 }
 
+<#
+.SYNOPSIS
+    Checks the number of days the computer has been online.
+.NOTES
+    CIM providers are used rather than the dedicated PowerShell command for accessing uptime for
+    compatibility reasons.  Only the most recent versions of PowerShell have a command available for
+    checking uptime directly.
+.OUTPUTS
+    A result hash.
+#>
 function Get-UptimeStaus{
     $daysUP = (New-TimeSpan -start (Get-CimInstance -ClassName win32_operatingsystem | Select-Object -exp LastBootUpTime) -end (Get-Date)).Days
     if ($daysUp -gt 5){
@@ -866,6 +1114,20 @@ function Get-UptimeStaus{
             }
     }
 }
+<#
+.SYNOPSIS
+    Sends diagnostic info to Azure blob storage.
+.DESCRIPTION
+    If results are passed as an argument they are sent to Azure blob storage. 
+    If no results are given then all tests are run using Run-PICOMTroubleShooting.
+.NOTES
+    Base uri and SAS token will eventually expire and will need to be renewed in the Azure portal.
+    Should consider factoring this in to a configuration file or env variable, but we need to know
+    how we will distribute the script before we can do that.
+.OUTPUTS
+    Returns the Azure blob URL wher diag logs can be viewed.
+#>
+
 
 function Send-DiagnosticInfo{
     param (
@@ -892,8 +1154,20 @@ function Send-DiagnosticInfo{
 
     $uploadUrl
 }
+<#
+.SYNOPSIS
+    Creates a user test tracker custom object that is used to keep track of the final results of all
+    tests run by the Run-UserTests cmdlet.
+.DESCRIPTION
+    The tracking object returned must have keys that represent each test to be performed by Run-UserTest.
+.OUTPUTS
+    A custom PS object that includes tracking keys.
+#>
+
 
 function Create-UserTestTracker{
+    #These are the keys for the tracked tests.  If a new test is added you need to 
+    #include it here.
     $test_status = [PSCustomObject]@{
         EthernetStatus= $false
         InternetStatus = $false
@@ -903,7 +1177,7 @@ function Create-UserTestTracker{
         FGConnectionStatus = $false
         ContinueTesting = $true
     }
-
+    #Checks if all tests configured on the object have passed.
     $all_passed_method = {
         $passed = $true
         foreach($test in $this.psobject.properties.name){
@@ -929,6 +1203,16 @@ function Create-UserTestTracker{
     return $test_status
 }
 
+<#
+.SYNOPSIS
+    Function for retrieving user input to continue, quit, or retry tests.
+.DESCRIPTION
+    The function translates the characters provided by the user into more explicit 
+    strings that are used by other functions to know how to execute next steps.
+.OUTPUTS
+    A string representing the action chosen by the user.
+#>
+
 function Get-UserInput{
     param(
         $UserMessage = "Press c to Continue to next test; Press r to Retry this test; Press q to Quit all Testing"
@@ -952,6 +1236,18 @@ function Get-UserInput{
     }
 }
 
+<#
+.SYNOPSIS
+    Function for handling the generic actions involved with running a user test including user input
+    and output.
+.DESCRIPTION
+    Receives a test function, a test tracking object, and test metadata and performs the given test and records
+    the results on the testing object.  Also handles displaying results to the user and gathering input from
+    the user using the Get-UserInput function.
+.NOTES
+    The key provided as Tracker key must match one of the keys that is configured on the tracker object
+    constructor function.
+#>
 function Run-UserTest{
     param(
         $TestTracker,
@@ -990,6 +1286,14 @@ function Run-UserTest{
         }
     }
 }
+<#
+.SYNOPSIS
+    Takes a test tracker and outputs the testing result to the user and prompts for input.
+.OUTPUTS
+    A testtracker object.
+#>
+
+
 function Summarize-Results{
     param(
         $TestTracker
@@ -1018,7 +1322,14 @@ function Summarize-Results{
         }
     }
 }
-
+<#
+.SYNOPSIS
+    A runner function that creates a test tracker and runs configured tests.
+.DESCRIPTION
+    There is not much to this function. It will continue to run tests as long as the 
+    tracker ContinueTesting attribute is set to true.  If new tests need to be added they
+    must be added as a Run-UserTest call in the body of the while loop.
+#>
 function Run-UserTests{
     $tracker = Create-UserTestTracker
     while((-not $tracker.AllPassed()) -and $tracker.ContinueTesting){
@@ -1060,6 +1371,11 @@ function Run-UserTests{
     }
     $tracker
 }
+<#
+.SYNOPSIS
+    Runs all tests.
+#>
+
 
 function Run-AllTests{
     [CmdletBinding()]
@@ -1089,6 +1405,14 @@ function Run-AllTests{
 
 }
 
+<#
+.SYNOPSIS
+    Runs all test and outputs the result.
+.INPUTS
+    Requires the hub code for validating configuration files.  Can optionally provide
+    an orderby argument that will determine in what order the test results will be 
+    displayed.
+#>
 function Run-PICOMTroubleShooting{
     [CmdletBinding()]
     param (
